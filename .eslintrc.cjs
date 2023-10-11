@@ -2,14 +2,14 @@ module.exports = {
   env: {
     browser: true,
     es2021: true,
-    node: true,
+    node: true
   },
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:@typescript-eslint/recommended',
     'prettier',
-    'plugin:prettier/recommend'
+    'plugin:prettier/recommended'
   ],
   overrides: [],
   parser: '@typescript-eslint/parser',
@@ -17,17 +17,17 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
     ecmaFeatures: {
-        jsx: true,
+      jsx: true
     }
   },
   plugins: ['react', '@typescript-eslint', 'prettier'],
   rules: {
-    'prettier': "error",
+    'prettier/prettier': 'error',
     indent: ['error', 2],
     'linebreak-style': ['error', 'unix'],
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
     'react/react-in-jsx-scope': 'off',
-    'react/jsx-uses-react': 'off',
-  },
+    'react/jsx-uses-react': 'off'
+  }
 };
