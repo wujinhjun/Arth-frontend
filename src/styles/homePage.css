@@ -1,0 +1,5 @@
+/* TODO: import a CSS nesting (or another) plugin */
+
+.btn-left-top {
+  background: linear-gradient(127deg, #505050 0%, #383838 100%);
+}
