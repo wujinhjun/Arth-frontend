@@ -46,11 +46,11 @@ react中的一个请求库，可以利用接口缓存优化性能
 
 ### 路径
 
-使用路径别名@
-components下为组件
-pages下为各个页面
-styles下为样式
-可以设置utils提供一些辅助函数
+使用路径别名@  
+components下为组件  
+pages下为各个页面  
+styles下为样式  
+可以设置utils提供一些辅助函数  
 
 ### 工具链
 
