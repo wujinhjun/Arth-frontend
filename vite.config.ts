@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), viteEslint()],
   resolve: {
     alias: {
-      '@': './src'
+      '@': '/src'
     }
   }
 });
