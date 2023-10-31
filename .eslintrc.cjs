@@ -28,6 +28,8 @@ module.exports = {
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
     'react/react-in-jsx-scope': 'off',
-    'react/jsx-uses-react': 'off'
+    'react/jsx-uses-react': 'off',
+    'no-unused-vars': 0,
+    '@typescript-eslint/no-unused-vars': 0
   }
 };
