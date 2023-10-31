@@ -1,0 +1,72 @@
+.container {
+  width: 200px;
+  height: 200px;
+  aspect-ratio: 1;
+  color: azure;
+  position: relative;
+  overflow: hidden;
+
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.loading {
+  aspect-ratio: 1;
+  background: royalblue;
+
+  -webkit-mask:
+    radial-gradient(closest-side circle, royalblue 99%, transparent 100%) center
+      top / 25% 25% no-repeat,
+    radial-gradient(
+      closest-side circle,
+      transparent 49%,
+      red 50% 99%,
+      transparent 100%
+    ),
+    conic-gradient(transparent 10%, royalblue 90%);
+  mask:
+    radial-gradient(closest-side circle, royalblue 99%, transparent 100%) center
+      top / 25% 25% no-repeat,
+    radial-gradient(
+      closest-side circle,
+      transparent 49%,
+      red 50% 99%,
+      transparent 100%
+    ),
+    conic-gradient(transparent 10%, royalblue 90%);
+  -webkit-mask-composite: source-over, source-in;
+  mask-composite: source-over, source-in;
+
+  animation: rotate 1s linear infinite;
+}
+
+@property --percent {
+  syntax: '<integer>';
+  inherits: false;
+  initial-value: 0;
+}
+.loading-num {
+  position: absolute;
+
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+}
+
+.loading-num::before {
+  --percent: 0;
+  counter-reset: progress var(--percent);
+  content: counter(progress);
+  transition: none;
+}
+
+.loading-num[class~='running']::before {
+  --percent: 99;
+  transition: 36s --percent cubic-bezier(0.08, 0.81, 0.29, 0.99);
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
