@@ -12,9 +12,14 @@
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
+    "@hookform/resolvers": "^3.3.2",
+    "immer": "^10.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "swr": "^2.2.4"
+    "react-hook-form": "^7.47.0",
+    "react-router-dom": "^6.17.0",
+    "swr": "^2.2.4",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.8.6",
@@ -37,5 +42,6 @@
     "vite": "^4.4.5",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-svgr": "^4.1.0"
-  }
+  },
+  "proxy": "http://127.0.0.1:7860/"
 }
