@@ -1,0 +1,15 @@
+.page-container {
+  display: flex;
+  width: 100vw;
+  height: 100%;
+
+  background: radial-gradient(
+    267.87% 134.65% at 13.33% 18.61%,
+    #343131 0%,
+    #1d1919 100%
+  );
+
+  --left-panel-width: 6rem;
+  --right-panel-width: calc(100vw - var(--left-panel-width));
+  --right-panel-timescale-height: 14rem;
+}
