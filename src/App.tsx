@@ -1,23 +1,27 @@
 import React, { useState } from 'react';
+import { NavLink, useRoutes, useLocation } from 'react-router-dom';
 
-import { NavLink, useRoutes } from 'react-router-dom';
-
+import { Tooltip } from 'react-tooltip';
 import {
   Bars3CenterLeftIcon,
   HomeIcon,
   MapIcon,
   ChartBarIcon,
   CreditCardIcon,
-  PaintBrushIcon
+  PaintBrushIcon,
+  Bars3Icon
 } from '@heroicons/react/24/outline';
 
 import HomePage from '@/pages/homePage';
 import TxtImgPage from './pages/txtImgPage';
 import EEGStudioPage from './pages/EEGstudioPage';
 import PaintingPage from './pages/paintingsPage';
+import Dashboard from './pages/dashboard';
+
 import styles from './styles/app.module.css';
 
 function App() {
+  const location = useLocation();
   const routes = useRoutes([
     {
       path: '/',
@@ -38,17 +42,25 @@ function App() {
     {
       path: 'painting',
       element: <PaintingPage />
+    },
+    {
+      path: 'dashboard',
+      element: <Dashboard />
     }
   ]);
 
+  console.log(location);
+
   const [navbarList] = useState([
-    { key: 'home', icon: HomeIcon },
-    { key: 'painting', icon: PaintBrushIcon },
-    { key: 'map', icon: MapIcon },
-    { key: 'chart', icon: ChartBarIcon },
-    { key: 'credit', icon: CreditCardIcon }
+    { key: 'home', icon: HomeIcon, tooltip: '主页', active: true },
+    { key: 'painting', icon: PaintBrushIcon, tooltip: '绘画', active: true },
+    { key: 'map', icon: MapIcon, tooltip: '广场', active: false },
+    { key: 'dashboard', icon: Bars3Icon, tooltip: '管理', active: true },
+    { key: 'credit', icon: CreditCardIcon, tooltip: 'lora', active: false }
   ]);
-  const [activeNavItem, setActiveNavItem] = useState<string>('home');
+  const [activeNavItem, setActiveNavItem] = useState<string>(
+    location.pathname.slice(1) || 'home'
+  );
 
   const handleChangeActiveNavItem = (
     e: React.MouseEvent<HTMLButtonElement>
@@ -91,6 +103,9 @@ function App() {
           onClick={handleChangeActiveNavItem}
         >
           {navbarList.map((item) => {
+            if (!item.active) {
+              return null;
+            }
             return (
               <NavLink
                 // unstable_viewTransition
@@ -100,11 +115,14 @@ function App() {
                 }`}
                 key={item.key}
                 id={item.key}
+                data-tooltip-id={`tooltip-${item.key}`}
+                data-tooltip-content={`${item.tooltip}`}
               >
                 <item.icon
                   className={`${styles['left-navbar-button-icon']}`}
                   id={item.key}
                 />
+                <Tooltip id={`tooltip-${item.key}`} place="right" />
               </NavLink>
             );
           })}
@@ -116,7 +134,8 @@ function App() {
           </button>
         </div>
       </div>
-      <div className="right-panel">{routes}</div>
+
+      <div className={`${styles['right-panel']}`}>{routes}</div>
     </section>
   );
 }
