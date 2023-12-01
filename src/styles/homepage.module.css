@@ -1,7 +1,7 @@
 .right-panel {
-  width: var(--right-panel-width);
-
   display: grid;
+  --right-panel-timescale-height: 14rem;
+
   grid-template: auto var(--right-panel-timescale-height) / 1fr;
 }
 

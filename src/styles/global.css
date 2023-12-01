@@ -11,5 +11,4 @@
 
   --left-panel-width: 6rem;
   --right-panel-width: calc(100vw - var(--left-panel-width));
-  --right-panel-timescale-height: 14rem;
 }
