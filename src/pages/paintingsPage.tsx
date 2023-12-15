@@ -16,10 +16,12 @@ import AutoHeightTextarea from '@/components/autoHeightTextarea';
 import LoadingNumber from '@/components/loadingNumber';
 import privateService from '@/service/privateService';
 import {
-  handleSingleImageUpload,
   handleUploadInitImage,
   handleUploadGeneratedImage
 } from '@/utils/utilsForUpload';
+import compressImage from '@/utils/compressImage';
+import uploadImageToBase64 from '@/utils/uploadImageToBase64';
+
 import { createTxtToImageSchema } from '@/utils/schema';
 import { genreConfig, imgRadioListConfig } from '@/utils/config';
 
@@ -127,8 +129,8 @@ export default function PaintingPage() {
     setRadioSelected(e);
   };
 
-  // 上传垫图并且预览
-  const handleUploadImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 选择垫图并在本地展示
+  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
 
     if (!files) {
@@ -137,47 +139,16 @@ export default function PaintingPage() {
     }
 
     const file = files[0];
-    // console.log(file);
 
-    const fileReader = new FileReader();
-    fileReader.readAsDataURL(file);
-
-    fileReader.onload = (event) => {
-      if (!event.target) {
-        return;
-      }
-
-      try {
-        const result = event.target.result as string;
-        setPreviewImage(result);
-
-        const canvas = document.createElement('canvas');
-        canvas.style.display = 'none';
-        canvas.width = 256;
-        canvas.height = 256;
-        const ctx = canvas.getContext('2d');
-
-        if (!ctx) {
-          return;
-        }
-
-        const img = new Image();
-        img.src = result;
-        img.onload = () => {
-          const radioCanvas = 256 / img.width;
-          canvas.width = img.width * radioCanvas;
-          canvas.height = img.height * radioCanvas;
-
-          ctx.drawImage(img, 0, 0);
-
-          const afterZip = canvas.toDataURL('image/jpeg', 0.92);
-          setValue('initImage', afterZip);
-        };
-      } catch (err) {
-        console.log(err);
-        toast.error('图片上传失败');
-      }
-    };
+    try {
+      const previewResult = await uploadImageToBase64(file);
+      setPreviewImage(previewResult);
+      const afterZip = await compressImage(previewResult);
+      setValue('initImage', afterZip);
+    } catch (error) {
+      console.log(error);
+      toast.error('垫图上传失败');
+    }
   };
 
   // 选择展示的图片
@@ -223,26 +194,15 @@ export default function PaintingPage() {
     }
 
     try {
-      // TODO:重写逻辑
       if (initImage) {
         const initImageUrl = await handleUploadInitImage(initImage);
         postObject.initImageUrl = initImageUrl;
       }
 
       const imageUrl = await handleUploadGeneratedImage(currentImage);
+      postObject.imageUrl = imageUrl!;
+      await privateService.uploadImageInformationForStorage(postObject);
 
-      const result = await fetch('/api/aigc-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...postObject,
-          imageUrl
-        })
-      });
-
-      console.log(result);
       toast.success('保存成功');
     } catch (error) {
       console.error(error);
