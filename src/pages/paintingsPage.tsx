@@ -15,7 +15,11 @@ import { nanoid } from 'nanoid';
 import AutoHeightTextarea from '@/components/autoHeightTextarea';
 import LoadingNumber from '@/components/loadingNumber';
 import privateService from '@/service/privateService';
-import { handleSingleImageUpload } from '@/utils/utilsForUpload';
+import {
+  handleSingleImageUpload,
+  handleUploadInitImage,
+  handleUploadGeneratedImage
+} from '@/utils/utilsForUpload';
 import { createTxtToImageSchema } from '@/utils/schema';
 import { genreConfig, imgRadioListConfig } from '@/utils/config';
 
@@ -201,11 +205,6 @@ export default function PaintingPage() {
     const currentImage = imagesList[activeDisplayImageIndex];
     const initImage = previewImage;
 
-    if (!currentImage) {
-      toast.error('请先生成图片');
-      return;
-    }
-
     const postObject = {
       id: nanoid(),
       initImageUrl: '',
@@ -217,52 +216,38 @@ export default function PaintingPage() {
       author: localStorage.getItem(GITHUB_USERNAME_ACTION)
     };
 
-    const uploadConfig = [
-      {
-        type: 'current_image',
-        image: currentImage,
-        successMessage: '当前图片上传成功',
-        errorMessage: '当前图片上传失败',
-        successAction: (res: string) => {
-          postObject.imageUrl = res;
-        }
-      }
-    ];
-
-    if (initImage) {
-      uploadConfig.push({
-        type: 'init_image',
-        image: initImage,
-        successMessage: '垫图上传成功',
-        errorMessage: '垫图上传失败',
-        successAction: (res: string) => {
-          postObject.initImageUrl = res;
-        }
-      });
+    // TODO: 暂时绕过
+    if (!currentImage) {
+      toast.error('请先生成图片');
+      return;
     }
 
-    const uploadGithubList = uploadConfig.map((config) =>
-      handleSingleImageUpload(config)
-    );
+    try {
+      // TODO:重写逻辑
+      if (initImage) {
+        const initImageUrl = await handleUploadInitImage(initImage);
+        postObject.initImageUrl = initImageUrl;
+      }
 
-    Promise.all(uploadGithubList)
-      .then(() => {
-        console.log(postObject);
+      const imageUrl = await handleUploadGeneratedImage(currentImage);
 
-        return fetch('/api/aigc-data', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(postObject)
-        });
-      })
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
+      const result = await fetch('/api/aigc-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...postObject,
+          imageUrl
+        })
       });
+
+      console.log(result);
+      toast.success('保存成功');
+    } catch (error) {
+      console.error(error);
+      toast.error('保存失败');
+    }
   };
 
   return (
