@@ -1,3 +1,8 @@
+import {
+  GITHUB_USERNAME_ACTION,
+  GITHUB_REPO_ACTION
+} from '@/utils/storageAction';
+
 export interface IDataGenerateImg {
   // 流派
   school: string;
@@ -15,3 +20,7 @@ export interface IDataGenerateImg {
   // 垫图
   initImage: string;
 }
+
+export type ConfigKeyType =
+  | typeof GITHUB_USERNAME_ACTION
+  | typeof GITHUB_REPO_ACTION;
