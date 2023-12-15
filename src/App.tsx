@@ -20,6 +20,7 @@ import TxtImgPage from './pages/txtImgPage';
 import EEGStudioPage from './pages/EEGstudioPage';
 import PaintingPage from './pages/paintingsPage';
 import Dashboard from './pages/dashboard';
+import UploadTestPage from './pages/uploadPage';
 
 import styles from './styles/app.module.css';
 
@@ -49,6 +50,10 @@ function App() {
     {
       path: 'dashboard',
       element: <Dashboard />
+    },
+    {
+      path: '/test',
+      element: <UploadTestPage />
     }
   ]);
 
