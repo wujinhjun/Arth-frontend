@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import style from '@/styles/txtImgPage.module.css';
 import { createImageSchema } from '@/utils/schema';
-import LoadingNumber from '@/components/LoadingNumber';
+import LoadingNumber from '@/components/loadingNumber/LoadingNumber';
 
 type IFormDataTxt2Img = {
   prompt: string;
@@ -38,7 +38,7 @@ export default function TxtImgPage() {
       height: data.height ?? 512 + 256,
       batch_size: data.batchSize
     };
-    fetch('http://localhost:3000/img/txt2img', {
+    fetch('/api/img/txt2img', {
       method: 'POST',
       body: JSON.stringify(formData),
       headers: {
