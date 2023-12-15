@@ -1,67 +1,34 @@
 import { useState, Fragment, useEffect, useRef } from 'react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-
-import { createTxtToImageSchema } from '@/utils/schema';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import cn from 'classnames';
-import publicService from '@/service/publicService';
-import { handleSingleImageUpload } from '@/utils/utilsForUpload';
-
-import { Menu, RadioGroup, Transition, Listbox } from '@headlessui/react';
-import downloadPng from '@/assets/download.png';
-import image1Png from '@/assets/image001.png';
-
+import { RadioGroup, Transition, Listbox } from '@headlessui/react';
+import toast from 'react-hot-toast';
 import {
   CheckIcon,
   ChevronUpDownIcon,
   ChevronDownIcon
 } from '@heroicons/react/20/solid';
+import { nanoid } from 'nanoid';
 
+// 自己的封装
 import AutoHeightTextarea from '@/components/autoHeightTextarea';
 import LoadingNumber from '@/components/loadingNumber';
+import privateService from '@/service/privateService';
+import { handleSingleImageUpload } from '@/utils/utilsForUpload';
+import { createTxtToImageSchema } from '@/utils/schema';
+import { genreConfig, imgRadioListConfig } from '@/utils/config';
 
+// 样式
 import style from '@/styles/painting.module.css';
-import toast from 'react-hot-toast';
 
-const base64Prefix = 'data:image/png;base64,';
-const genre = [
-  { name: '文艺复兴' },
-  { name: '巴洛克' },
-  { name: '洛可可' },
-  { name: '新古典主义' },
-  { name: '浪漫主义' },
-  { name: '印象派' }
-];
-
-const imgRadioList = [
-  {
-    numerator: 1,
-    denominator: 1,
-    name: '1:1'
-  },
-  {
-    numerator: 4,
-    denominator: 3,
-    name: '4:3'
-  },
-  {
-    numerator: 16,
-    denominator: 9,
-    name: '16:9'
-  }
-];
-
-type IFormDataTxt2Img = {
-  school: string;
-  prompt: string;
-  negativePrompt: string;
-  width: number;
-  height: number;
-  batchSize: number;
-  steps: number;
-  initImage: string;
-};
+// 自定义types
+import type { IDataGenerateImg } from '@/utils/types';
+import {
+  STABLE_DIFFUSION_ACTION,
+  GITHUB_USERNAME_ACTION,
+  GITHUB_REPO_ACTION
+} from '@/utils/storageAction';
 
 export default function PaintingPage() {
   const {
@@ -71,7 +38,7 @@ export default function PaintingPage() {
     setValue,
     control,
     formState: { errors }
-  } = useForm<IFormDataTxt2Img>({
+  } = useForm<IDataGenerateImg>({
     resolver: zodResolver(createTxtToImageSchema),
     defaultValues: {
       school: '文艺复兴',
@@ -94,47 +61,45 @@ export default function PaintingPage() {
   const [activeDisplayImageIndex, setActiveDisplayImageIndex] =
     useState<number>(0);
   // 选择的图片比例
-  const [radioSelected, setRadioSelected] = useState(imgRadioList[0].name);
+  const [radioSelected, setRadioSelected] = useState(
+    imgRadioListConfig[0].name
+  );
 
   // onSubmit 生成图片
-  const onSubmit: SubmitHandler<IFormDataTxt2Img> = (data) => {
-    setIsCreatingImageProcessing(true);
-    fetch('/api/imgs/generateImg', {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.code !== 200) {
-          throw new Error(JSON.stringify(res.error));
-        }
+  const onSubmit: SubmitHandler<IDataGenerateImg> = async (data) => {
+    if (!localStorage.getItem(STABLE_DIFFUSION_ACTION)) {
+      toast.error('请先配置 sd 服务地址');
+      return;
+    }
+    try {
+      setIsCreatingImageProcessing(true);
+      const res = await privateService.generateImage(data);
+      setImagesList(res);
+      setActiveDisplayImageIndex(0);
+    } catch (err) {
+      console.error(err);
 
-        return res.data;
-      })
-      .then((res) => {
-        return res.map((item: string) => base64Prefix + item);
-      })
-      .then((res) => {
-        setImagesList(res);
-        setActiveDisplayImageIndex(0);
-      })
-      .catch((err) => {
-        console.log(err);
-        const error = JSON.parse(err.message);
-        console.log(error);
-        const details =
-          typeof error.detail === 'string' ? error.detail : error.detail[0].msg;
-        const errorMessage = error.title || error.errors || details;
-        toast.error(errorMessage, {
-          duration: 5000
-        });
-      })
-      .finally(() => {
-        setIsCreatingImageProcessing(false);
+      let errorMessage = '生成图片失败';
+
+      try {
+        const errorBody = JSON.parse(err as string);
+
+        errorMessage =
+          errorBody.title ||
+          errorBody.errors ||
+          errorBody.detail ||
+          errorBody.message ||
+          errorMessage;
+      } catch {
+        errorMessage = '生成图片失败，请检查远端系统后重试';
+      }
+
+      toast.error(errorMessage, {
+        duration: 5000
       });
+    } finally {
+      setIsCreatingImageProcessing(false);
+    }
   };
 
   // 选择图片比例
@@ -219,38 +184,85 @@ export default function PaintingPage() {
       return;
     }
     const index = dataset.picItem as unknown as number;
+
     setActiveDisplayImageIndex(index);
   };
 
   // 上传当前的图片以及垫图
-  // 辅助函数
+  const handleUploadCurrentImage = async () => {
+    const owner = localStorage.getItem(GITHUB_USERNAME_ACTION);
+    const repo = localStorage.getItem(GITHUB_REPO_ACTION);
 
-  // 上传当前的图片以及垫图
-  const handleUploadCurrentImage = () => {
+    if (!owner || !repo) {
+      toast.error('请先配置github用户名和仓库名');
+      return;
+    }
+
     const currentImage = imagesList[activeDisplayImageIndex];
     const initImage = previewImage;
 
-    if (!currentImage || !initImage) {
+    if (!currentImage) {
       toast.error('请先生成图片');
       return;
     }
 
+    const postObject = {
+      id: nanoid(),
+      initImageUrl: '',
+      imageUrl: '',
+      name: watch('school') + `${nanoid().slice(0, 4)}`,
+      prompt: watch('prompt'),
+      negativePrompt: watch('negativePrompt') ?? '',
+      date: new Date().getTime(),
+      author: localStorage.getItem(GITHUB_USERNAME_ACTION)
+    };
+
     const uploadConfig = [
-      {
-        type: 'init_image',
-        image: initImage,
-        successMessage: '垫图上传成功',
-        errorMessage: '垫图上传失败'
-      },
       {
         type: 'current_image',
         image: currentImage,
         successMessage: '当前图片上传成功',
-        errorMessage: '当前图片上传失败'
+        errorMessage: '当前图片上传失败',
+        successAction: (res: string) => {
+          postObject.imageUrl = res;
+        }
       }
     ];
 
-    uploadConfig.forEach((config) => handleSingleImageUpload(config));
+    if (initImage) {
+      uploadConfig.push({
+        type: 'init_image',
+        image: initImage,
+        successMessage: '垫图上传成功',
+        errorMessage: '垫图上传失败',
+        successAction: (res: string) => {
+          postObject.initImageUrl = res;
+        }
+      });
+    }
+
+    const uploadGithubList = uploadConfig.map((config) =>
+      handleSingleImageUpload(config)
+    );
+
+    Promise.all(uploadGithubList)
+      .then(() => {
+        console.log(postObject);
+
+        return fetch('/api/aigc-data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(postObject)
+        });
+      })
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (
@@ -295,7 +307,7 @@ export default function PaintingPage() {
                           leaveTo="opacity-0"
                         >
                           <Listbox.Options className="absolute z-10 cursor-pointer mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-                            {genre.map((school, schoolIdx) => (
+                            {genreConfig.map((school, schoolIdx) => (
                               <Listbox.Option
                                 key={schoolIdx}
                                 className={({ active }) =>
@@ -398,7 +410,7 @@ export default function PaintingPage() {
                     Choose a size
                   </RadioGroup.Label>
                   <div className="px-2 pt-3 pb-1 flex justify-around bg-gray-600/60 rounded-xl">
-                    {imgRadioList.map((item) => {
+                    {imgRadioListConfig.map((item) => {
                       const { numerator, denominator, name } = item;
                       const value = numerator / denominator;
                       return (
@@ -540,7 +552,7 @@ export default function PaintingPage() {
                   <li
                     key={idx}
                     className={`${style['display-images-list-item']} ${
-                      idx === activeDisplayImageIndex ? 'active' : ''
+                      idx === Number(activeDisplayImageIndex) ? 'active' : ''
                     }`}
                   >
                     <img src={item} alt="" data-pic-item={idx} />
@@ -550,10 +562,13 @@ export default function PaintingPage() {
             </ul>
           </div>
         )}
-        <button className="absolute bottom-[10rem] w-[4rem] aspect-square transition-all hover:bg-white bg-white/80 right-[4rem] flex items-center justify-center rounded-2xl">
-          上传
+        <button
+          onClick={handleUploadCurrentImage}
+          className="absolute bottom-[10rem] w-[4rem] aspect-square transition-all hover:bg-white bg-white/80 right-[4rem] flex items-center justify-center rounded-2xl"
+        >
+          保存
           <br />
-          图床
+          图片
         </button>
       </div>
     </section>
