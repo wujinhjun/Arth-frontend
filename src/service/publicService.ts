@@ -47,7 +47,6 @@ function uploadImageToGithub(fileName: string, image: string) {
       return res.json();
     })
     .then((res) => {
-      console.log(res);
       const downloadUrl = res.content.download_url
         .replace('raw.githubusercontent.com', 'cdn.jsdelivr.net/gh')
         .replace('/main', '');
