@@ -1,6 +1,9 @@
 const TOKEN = import.meta.env.VITE_GITHUB_SSH_KEY;
-const OWNER = 'wujinhjun';
-const REPO = 'arth-picture';
+
+import {
+  GITHUB_USERNAME_ACTION,
+  GITHUB_REPO_ACTION
+} from '@/utils/storageAction';
 
 /**
  * Description: 上传图片到github
@@ -11,6 +14,8 @@ const REPO = 'arth-picture';
  */
 function uploadImageToGithub(fileName: string, image: string) {
   const date = new Date();
+  const owner = localStorage.getItem(GITHUB_USERNAME_ACTION);
+  const repo = localStorage.getItem(GITHUB_REPO_ACTION);
 
   const path = `${date.getFullYear()}_${
     date.getMonth() + 1
@@ -31,7 +36,7 @@ function uploadImageToGithub(fileName: string, image: string) {
   };
 
   return fetch(
-    `https://api.github.com/repos/wujinhjun/arth-picture/contents/${path}`,
+    `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
     {
       method: 'PUT',
       headers,
