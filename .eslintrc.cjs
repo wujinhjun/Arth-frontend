@@ -23,7 +23,6 @@ module.exports = {
   plugins: ['react', '@typescript-eslint', 'prettier'],
   rules: {
     'prettier/prettier': 'error',
-    indent: ['error', 2],
     'linebreak-style': ['error', 'unix'],
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
@@ -31,5 +30,10 @@ module.exports = {
     'react/jsx-uses-react': 'off',
     'no-unused-vars': 0,
     '@typescript-eslint/no-unused-vars': 0
+  },
+  settings: {
+    react: {
+      version: 'detect'
+    }
   }
 };

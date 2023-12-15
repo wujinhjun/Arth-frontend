@@ -6,7 +6,11 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), viteEslint(), svgr()],
+  plugins: [
+    react(),
+    //  viteEslint(),
+    svgr()
+  ],
   resolve: {
     alias: {
       '@': path.join(__dirname, 'src')
